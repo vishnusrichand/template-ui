@@ -2,6 +2,7 @@ import * as path from "node:path";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import authCheckPlugin from "../plugins/auth-check.plugin.js";
 import { getAgentName } from "../utils/config.js";
+import { threadStorageKeySuffix } from "../utils/threadMetadata.js";
 
 const BUILD_VERSION = Date.now().toString(36);
 const basePath = (process.env.BASE_PATH || "").replace(/\/+$/, "");
@@ -44,6 +45,7 @@ async function routes(fastify: FastifyInstance) {
       basePath: basePath || "/",
       refreshableToken: "",
       agentName,
+      threadStorageScope: threadStorageKeySuffix(),
     };
 
     reply.type("text/html");

@@ -21,6 +21,7 @@ export interface AppData {
   refreshableToken: string;
   agentName: string;
   basePath?: string;
+  threadStorageScope?: string;
 }
 
 // Extend the Window interface to include USER_DATA and APP_DATA

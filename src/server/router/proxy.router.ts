@@ -1,6 +1,11 @@
 import { FastifyInstance, FastifyReply } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import { agentHost } from '../utils/config.js';
+import {
+  buildThreadSearchMetadata,
+  getThreadScopeMetadata,
+  mergeThreadMetadata,
+} from '../utils/threadMetadata.js';
 import authCheckPlugin from '../plugins/auth-check.plugin.js';
 
 /** In-memory LRU cache for thread state responses (avoids repeated LangGraph deserialization). */
@@ -296,7 +301,7 @@ async function proxyRoutes(fastify: FastifyInstance) {
           headers,
           body: JSON.stringify({
             threadId: thread_id,
-            metadata: { user_identity: user_id ?? 'anonymous' },
+            metadata: mergeThreadMetadata(user_id ?? 'anonymous'),
             ifExists: 'do_nothing',
           }),
         });
@@ -309,6 +314,26 @@ async function proxyRoutes(fastify: FastifyInstance) {
           );
           return reply.status(threadResp.status).send({ error: 'Thread creation failed' });
         }
+
+        // Backfill scope on existing threads (ifExists=do_nothing skips metadata on create).
+        // const scopeMetadata = getThreadScopeMetadata();
+        // if (Object.keys(scopeMetadata).length > 0) {
+        //   const patchResp = await fetch(`${agentHost}/threads/${thread_id}`, {
+        //     method: 'PATCH',
+        //     headers,
+        //     body: JSON.stringify({
+        //       metadata: mergeThreadMetadata(user_id ?? 'anonymous'),
+        //     }),
+        //   });
+        //   if (!patchResp.ok) {
+        //     const body = await patchResp.text();
+        //     fastify.log.warn(
+        //       { traceId, status: patchResp.status, body },
+        //       'Thread scope metadata patch failed',
+        //     );
+        //   }
+        // }
+
         fastify.log.info({ traceId }, 'Thread ready');
 
         // ── 2. Start a streaming run on that thread ──
@@ -593,8 +618,30 @@ async function proxyRoutes(fastify: FastifyInstance) {
           headers,
         };
 
-        if (request.method !== 'GET' && request.method !== 'HEAD' && request.body) {
-          fetchOptions.body = JSON.stringify(request.body);
+        let proxyBody = request.body;
+        if (
+          request.method === 'POST'
+          && proxyBody
+          && typeof proxyBody === 'object'
+          && (path === 'threads' || path === 'threads/search')
+        ) {
+          const body = proxyBody as { metadata?: Record<string, unknown> };
+          const clientMetadata = body.metadata ?? {};
+          const userIdentity =
+            typeof clientMetadata.user_identity === 'string'
+              ? clientMetadata.user_identity
+              : 'anonymous';
+          proxyBody = {
+            ...body,
+            metadata:
+              path === 'threads/search'
+                ? buildThreadSearchMetadata(userIdentity, clientMetadata)
+                : mergeThreadMetadata(userIdentity, clientMetadata),
+          };
+        }
+
+        if (request.method !== 'GET' && request.method !== 'HEAD' && proxyBody) {
+          fetchOptions.body = JSON.stringify(proxyBody);
         }
 
         const agentResponse = await fetch(agentUrl, fetchOptions);
