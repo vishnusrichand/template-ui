@@ -124,7 +124,7 @@ export function TrendChart({ data }: TrendChartProps) {
               itemStyle={{ color: 'var(--foreground)' }}
               labelStyle={{ color: 'var(--foreground)', fontWeight: 600 }}
               labelFormatter={(label: string) => formatTooltipLabel(label)}
-              formatter={(value: number) => [`${value}%`]}
+              formatter={(value: number, name: string) => [`${value}%`, name]}
             />
             <Legend
               wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
