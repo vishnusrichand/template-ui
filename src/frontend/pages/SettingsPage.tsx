@@ -18,7 +18,7 @@ const TABS: { id: TabId; label: string; panelTitle?: string; icon: typeof User }
   { id: 'rules', label: 'Custom Rules', icon: ScrollText },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'tool-approvals', label: 'Tool Approvals', icon: ShieldCheck },
-  { id: 'developer', label: 'Developer', panelTitle: 'Agent Evaluation', icon: Code2 },
+  { id: 'developer', label: 'Developer', icon: Code2 },
 ];
 
 const TAB_CONTENT: Record<TabId, React.FC> = {
@@ -131,7 +131,9 @@ export function SettingsPage() {
                     tabIndex={0}
                     className="bg-card border border-border rounded-xl p-6 focus:outline-none"
                   >
-                    <h2 className={`text-base font-semibold text-foreground mb-4 ${tab.id === 'developer' ? 'text-center' : ''}`}>{tab.panelTitle ?? tab.label}</h2>
+                    {tab.id !== 'developer' && (
+                      <h2 className="text-base font-semibold text-foreground mb-4">{tab.panelTitle ?? tab.label}</h2>
+                    )}
                     {activeTab === tab.id && <Content />}
                   </div>
                 );
