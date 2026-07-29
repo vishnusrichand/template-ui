@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@patternfly/react-core';
 import { ArrowLeft, User, Brain, ScrollText, Palette, ShieldCheck, Code2 } from 'lucide-react';
@@ -9,6 +9,8 @@ import { RulesEditor } from '../components/settings/RulesEditor';
 import { AppearanceSettings } from '../components/settings/AppearanceSettings';
 import { AlwaysAllowedTools } from '../components/settings/AlwaysAllowedTools';
 import { DeveloperSettings } from '../components/settings/DeveloperSettings';
+import { useAppSelector } from '../redux/hooks';
+import { selectDeveloperMode } from '../redux/slices/userSettings';
 
 type TabId = 'profile' | 'memories' | 'rules' | 'appearance' | 'tool-approvals' | 'developer';
 
@@ -34,9 +36,18 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const tabRefs = useRef<Map<TabId, HTMLButtonElement>>(new Map());
+  const developerMode = useAppSelector(selectDeveloperMode);
+
+  const visibleTabs = TABS.filter((t) => t.id !== 'developer' || developerMode);
+
+  useEffect(() => {
+    if (activeTab === 'developer' && !developerMode) {
+      setActiveTab('profile');
+    }
+  }, [developerMode, activeTab]);
 
   const handleTabKeyDown = (e: React.KeyboardEvent, tabId: TabId) => {
-    const tabIds = TABS.map((t) => t.id);
+    const tabIds = visibleTabs.map((t) => t.id);
     const currentIndex = tabIds.indexOf(tabId);
 
     let nextIndex: number | null = null;
@@ -86,7 +97,7 @@ export function SettingsPage() {
                 aria-label="Settings"
                 className="flex sm:flex-col gap-1"
               >
-                {TABS.map((tab) => {
+                {visibleTabs.map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
                   return (
@@ -119,7 +130,7 @@ export function SettingsPage() {
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              {TABS.map((tab) => {
+              {visibleTabs.map((tab) => {
                 const Content = TAB_CONTENT[tab.id];
                 return (
                   <div

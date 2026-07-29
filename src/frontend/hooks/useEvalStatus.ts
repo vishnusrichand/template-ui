@@ -16,6 +16,7 @@ export interface EvalState {
   error: number;
   configHash: string;
   lastChecked: Date | null;
+  createdAt: string | null;
 }
 
 const POLL_ACTIVE_MS = 5_000;
@@ -29,6 +30,7 @@ const INITIAL: EvalState = {
   error: 0,
   configHash: '',
   lastChecked: null,
+  createdAt: null,
 };
 
 export function useEvalStatus(): EvalState {
@@ -55,6 +57,7 @@ export function useEvalStatus(): EvalState {
           error: typeof data.error === 'number' ? data.error : 0,
           configHash: typeof data.config_hash === 'string' ? data.config_hash : '',
           lastChecked: new Date(),
+          createdAt: typeof data.created_at === 'string' ? data.created_at : null,
         });
       }
     } catch {

@@ -27,6 +27,14 @@ export function MetricTrendsSection({ data }: MetricTrendsSectionProps) {
   const hasMetrics = metricKeys.length > 0;
   const colors = getColors();
 
+  // ISO timestamp of the most recent overall run — used to determine which
+  // metric cards should show a "current" value vs. a stale historical one.
+  const latestOverallAt = data.overall.length > 0
+    ? [...data.overall].sort(
+        (a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime(),
+      )[0].completed_at
+    : undefined;
+
   if (!hasMetrics && (!data.overall || data.overall.length < 2)) {
     return (
       <div className="space-y-2">
@@ -87,6 +95,7 @@ export function MetricTrendsSection({ data }: MetricTrendsSectionProps) {
                 score_mean: null,
               }))}
               color={colors[0 % colors.length]}
+              latestOverallAt={latestOverallAt}
             />
           )}
           {metricKeys.map((key, i) => (
@@ -95,6 +104,7 @@ export function MetricTrendsSection({ data }: MetricTrendsSectionProps) {
               metricKey={key}
               points={data.metrics[key]}
               color={colors[(i + 1) % colors.length]}
+              latestOverallAt={latestOverallAt}
             />
           ))}
         </div>

@@ -7,9 +7,12 @@ interface MetricTrendCardProps {
   metricKey: string;
   points: MetricTrendPoint[];
   color: string;
+  /** ISO timestamp of the most recent overall eval run. When provided, the
+   *  current-value badge is only shown if this metric was evaluated in that run. */
+  latestOverallAt?: string;
 }
 
-export function MetricTrendCard({ metricKey, points, color }: MetricTrendCardProps) {
+export function MetricTrendCard({ metricKey, points, color, latestOverallAt }: MetricTrendCardProps) {
   const sorted = [...points].sort(
     (a, b) => new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime(),
   );
@@ -17,7 +20,16 @@ export function MetricTrendCard({ metricKey, points, color }: MetricTrendCardPro
   const latest = sorted[sorted.length - 1];
   const prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
 
-  const rate = latest?.pass_rate;
+  // Only show current value if this metric appeared in the latest run.
+  // Allow 60 s tolerance for clock skew between agent and Postgres.
+  const isFromLatestRun = (() => {
+    if (!latestOverallAt || !latest?.completed_at) return true; // no reference — show anyway
+    const latestMetricMs = new Date(latest.completed_at).getTime();
+    const latestOverallMs = new Date(latestOverallAt).getTime();
+    return Math.abs(latestMetricMs - latestOverallMs) <= 60_000;
+  })();
+
+  const rate = isFromLatestRun ? latest?.pass_rate : null;
   const pct = rate != null ? Math.round(rate * 100) : null;
   const prevPct = prev?.pass_rate != null ? Math.round(prev.pass_rate * 100) : null;
   const delta = pct != null && prevPct != null ? pct - prevPct : null;

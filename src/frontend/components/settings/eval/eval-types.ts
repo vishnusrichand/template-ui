@@ -99,7 +99,6 @@ export interface EvalHistoryResponse {
 export interface MetricTrendPoint {
   completed_at: string;
   pass_rate: number | null;
-  score_mean: number | null;
 }
 
 export interface EvalTrendsResponse {

@@ -39,6 +39,7 @@ export function EvalDashboard() {
         score={evalState.score}
         pass={evalState.pass}
         fail={evalState.fail}
+        createdAt={evalState.createdAt}
       />
 
       {trends && <MetricTrendsSection data={trends} />}

@@ -1,40 +1,40 @@
 import { useEffect, useState } from 'react';
 
-let runningStartTime: number | null = null;
-
 interface EvalStatusBarProps {
   status: string | null;
   score: number | null;
   pass: number;
   fail: number;
+  createdAt?: string | null;
 }
 
-export function EvalStatusBar({ status, score, pass, fail }: EvalStatusBarProps) {
+function formatElapsed(ms: number): string {
+  const secs = Math.floor(ms / 1000);
+  if (secs < 60) return `${secs}s`;
+  return `${Math.floor(secs / 60)}m ${secs % 60}s`;
+}
+
+export function EvalStatusBar({ status, score, pass, fail, createdAt }: EvalStatusBarProps) {
   const [elapsed, setElapsed] = useState('');
 
   const isRunning = status === 'in_progress' || status === 'not_started';
 
   useEffect(() => {
-    if (isRunning && runningStartTime == null) {
-      runningStartTime = Date.now();
-    }
     if (!isRunning) {
-      runningStartTime = null;
       setElapsed('');
+      return;
     }
-  }, [isRunning]);
 
-  useEffect(() => {
-    if (!isRunning || runningStartTime == null) return;
-    const tick = () => {
-      const secs = Math.floor((Date.now() - runningStartTime!) / 1000);
-      if (secs < 60) setElapsed(`${secs}s`);
-      else setElapsed(`${Math.floor(secs / 60)}m ${secs % 60}s`);
-    };
+    // Anchor to server-provided created_at so the timer survives tab switches
+    // and component remounts. Fall back to now() only if the server hasn't
+    // sent a timestamp yet (first render before first poll completes).
+    const startMs = createdAt ? new Date(createdAt).getTime() : Date.now();
+
+    const tick = () => setElapsed(formatElapsed(Date.now() - startMs));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [isRunning]);
+  }, [isRunning, createdAt]);
 
   if (!status || status === 'unknown') return null;
 

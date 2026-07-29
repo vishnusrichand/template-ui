@@ -40,8 +40,7 @@ export function useEvalDashboard(): EvalDashboardState {
   const resultRef = useRef(result);
   resultRef.current = result;
 
-  const isRunning =
-    evalState.status === 'in_progress' || evalState.status === 'not_started';
+  const isRunning = evalState.status === 'in_progress';
 
   const fetchResults = useCallback(async () => {
     try {
@@ -63,6 +62,8 @@ export function useEvalDashboard(): EvalDashboardState {
       prevStatusRef.current === 'in_progress' ||
       prevStatusRef.current === 'not_started';
     const isNowComplete = evalState.status === 'completed';
+    const isNowDone =
+      evalState.status === 'completed' || evalState.status === 'failed';
 
     if (wasRunning && isNowComplete) {
       void fetchResults();
@@ -72,9 +73,14 @@ export function useEvalDashboard(): EvalDashboardState {
 
     if (
       prevStatusRef.current === 'unknown' &&
-      (evalState.status === 'completed' || evalState.status === 'failed')
+      isNowDone
     ) {
       void fetchResults();
+    }
+
+    // Clear the "queued / running" trigger message once the eval finishes.
+    if (wasRunning && isNowDone) {
+      setTriggerState({ status: 'idle', message: '' });
     }
 
     prevStatusRef.current = evalState.status;

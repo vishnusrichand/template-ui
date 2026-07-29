@@ -44,10 +44,16 @@ async function fetchRunDetail(completedAt: string): Promise<EvalRow | null> {
   }
 }
 
+const PAGE_SIZE = 5;
+
 export function EvalRunsTable({ runs, onViewReport }: EvalRunsTableProps) {
   const [loadingRow, setLoadingRow] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
 
   if (runs.length === 0) return null;
+
+  const totalPages = Math.ceil(runs.length / PAGE_SIZE);
+  const pageRuns = runs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const handleRowClick = async (run: EvalHistoryRun) => {
     setLoadingRow(run.completed_at);
@@ -81,9 +87,10 @@ export function EvalRunsTable({ runs, onViewReport }: EvalRunsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {runs.map((run, i) => {
+            {pageRuns.map((run, i) => {
               const pct = Math.round(run.eval_score * 100);
               const isLoading = loadingRow === run.completed_at;
+              const globalIndex = page * PAGE_SIZE + i;
 
               return (
                 <tr
@@ -97,7 +104,7 @@ export function EvalRunsTable({ runs, onViewReport }: EvalRunsTableProps) {
                       <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse mr-2" />
                     )}
                     {formatTimestamp(run.completed_at)}
-                    {i === 0 && (
+                    {globalIndex === 0 && (
                       <span className="ml-2 text-[10px] font-medium text-primary bg-primary/10 rounded px-1.5 py-0.5">
                         Latest
                       </span>
@@ -129,6 +136,30 @@ export function EvalRunsTable({ runs, onViewReport }: EvalRunsTableProps) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs text-muted-foreground tabular-nums">
+            Page {page + 1} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="text-xs px-3 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page === totalPages - 1}
+              className="text-xs px-3 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
