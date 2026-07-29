@@ -43,7 +43,7 @@ export function ConversationDetailTable({
 
   if (filteredEntries.length === 0 && availableTags.length === 0) return null;
 
-  const showChips = availableTags.length > 0 && onTagChange;
+  const showChips = availableTags.length > 0 && !!onTagChange;
 
   return (
     <div className="space-y-2">
@@ -57,7 +57,7 @@ export function ConversationDetailTable({
             {['all', ...availableTags].map((tag) => (
               <button
                 key={tag}
-                onClick={() => onTagChange(tag)}
+                onClick={() => onTagChange?.(tag)}
                 className={`text-xs font-medium px-2.5 py-0.5 rounded-full border transition-colors cursor-pointer ${
                   (activeTag ?? 'all') === tag
                     ? 'bg-primary border-primary text-white'
@@ -96,7 +96,7 @@ export function ConversationDetailTable({
                     {friendlyConversationName(conv)}
                     {convTag && (
                       <span className={`ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded ${tagColor(convTag)}`}>
-                        {convTag}
+                        {friendlyTagName(convTag)}
                       </span>
                     )}
                   </span>

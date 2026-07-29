@@ -33,9 +33,9 @@ describe('ConversationDetailTable', () => {
         onTagChange={() => {}}
       />
     );
-    expect(screen.getByText('All')).toBeInTheDocument();
-    expect(screen.getByText('Hitl')).toBeInTheDocument();
-    expect(screen.getByText('Tool Use')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hitl' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tool Use' })).toBeInTheDocument();
   });
 
   it('calls onTagChange when a chip is clicked', () => {
@@ -48,7 +48,7 @@ describe('ConversationDetailTable', () => {
         onTagChange={onTagChange}
       />
     );
-    fireEvent.click(screen.getByText('Hitl'));
+    fireEvent.click(screen.getByRole('button', { name: 'Hitl' }));
     expect(onTagChange).toHaveBeenCalledWith('hitl');
   });
 
