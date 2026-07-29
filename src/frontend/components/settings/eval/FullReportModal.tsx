@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { EvalRow } from './eval-types';
 import { ScoreGauge } from './ScoreGauge';
 import { ScoreHero } from './ScoreHero';
@@ -15,6 +16,9 @@ export function FullReportModal({ result, prevScore, onClose }: FullReportModalP
   const byMetric = detail?.summary?.summary_stats?.by_metric;
   const byConversation = detail?.summary?.summary_stats?.by_conversation;
   const turns = detail?.turns ?? [];
+
+  const availableTags = [...new Set(turns.map((t) => t.tag).filter((t): t is string => !!t))];
+  const [activeTag, setActiveTag] = useState('all');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -50,7 +54,13 @@ export function FullReportModal({ result, prevScore, onClose }: FullReportModalP
           )}
 
           {turns.length > 0 && (
-            <ConversationDetailTable turns={turns} byConversation={byConversation} />
+            <ConversationDetailTable
+              turns={turns}
+              byConversation={byConversation}
+              availableTags={availableTags}
+              activeTag={activeTag}
+              onTagChange={setActiveTag}
+            />
           )}
 
           <details className="mt-4">

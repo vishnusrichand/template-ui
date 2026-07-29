@@ -94,7 +94,7 @@ export function ConversationDetailTable({
                 >
                   <span className="text-sm font-semibold text-foreground">
                     {friendlyConversationName(conv)}
-                    {convTag && (
+                    {convTag && !showChips && (
                       <span className={`ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded ${tagColor(convTag)}`}>
                         {friendlyTagName(convTag)}
                       </span>
