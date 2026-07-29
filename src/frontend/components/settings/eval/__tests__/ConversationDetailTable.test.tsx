@@ -66,8 +66,9 @@ describe('ConversationDetailTable', () => {
       />
     );
     // conv_1 visible (tag matches), conv_2 hidden
-    expect(screen.getByText('Conv 1')).toBeInTheDocument();
-    expect(screen.queryByText('Conv 2')).not.toBeInTheDocument();
+    // use role selector because the badge appends tag text to the header span
+    expect(screen.getByRole('button', { name: /Conv 1/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Conv 2/ })).not.toBeInTheDocument();
   });
 
   it('shows all conversations when activeTag is "all"', () => {
@@ -83,7 +84,7 @@ describe('ConversationDetailTable', () => {
         onTagChange={() => {}}
       />
     );
-    expect(screen.getByText('Conv 1')).toBeInTheDocument();
-    expect(screen.getByText('Conv 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Conv 1/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Conv 2/ })).toBeInTheDocument();
   });
 });
