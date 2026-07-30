@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { MetricTrendPoint } from './eval-types';
 import { friendlyMetricName } from './eval-utils';
 import { SparklineChart } from './SparklineChart';

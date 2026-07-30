@@ -50,8 +50,6 @@ export function MetricTrendsSection({ data }: MetricTrendsSectionProps) {
     );
   }
 
-  const allKeys = ['Overall', ...metricKeys];
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">

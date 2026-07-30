@@ -7,7 +7,6 @@ interface ScoreHeroProps {
 
 export function ScoreHero({ data, prevScore }: ScoreHeroProps) {
   const score = data.eval_score ?? null;
-  const pct = score != null ? Math.round(score * 100) : null;
 
   const trend =
     prevScore != null && score != null ? Math.round((score - prevScore) * 100) : null;
