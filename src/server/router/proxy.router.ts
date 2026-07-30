@@ -446,6 +446,10 @@ async function proxyRoutes(fastify: FastifyInstance) {
 
         let hasEmittedTextTokens = false;
         let interruptEmittedFromStream = false;
+        // Per-message tracking for draft_discard (suppress text from tool-call messages)
+        let currentStreamingMsgId = '';
+        let textEmittedForCurrentMsg = false;
+        const discardedMsgIds = new Set<string>();
 
         try {
           while (!clientGone) {
@@ -531,6 +535,16 @@ async function proxyRoutes(fastify: FastifyInstance) {
                   continue;
                 }
 
+                // Reset per-message state before translation
+                if (sseType === 'messages/partial' && Array.isArray(parsed) && parsed.length > 0) {
+                  const peekId = (parsed[0] as Record<string, any>)?.id ?? '';
+                  if (peekId && peekId !== currentStreamingMsgId) {
+                    currentStreamingMsgId = peekId;
+                    textEmittedForCurrentMsg = false;
+                    prevPartial = '';
+                  }
+                }
+
                 const [uiChunks, nextPartial] = translateMessageEvent(
                   sseType,
                   parsed,
@@ -538,6 +552,22 @@ async function proxyRoutes(fastify: FastifyInstance) {
                   prevPartial,
                   sentMsgIds,
                 );
+
+                // Detect tool_calls in partials and discard any text already streamed
+                if (sseType === 'messages/partial' && Array.isArray(parsed) && parsed.length > 0) {
+                  const partialMsg = parsed[0] as Record<string, any>;
+                  const partialMsgId = partialMsg?.id ?? '';
+                  const partialToolCalls = extractToolCalls(partialMsg ?? {});
+                  if (partialToolCalls.length > 0 && textEmittedForCurrentMsg) {
+                    reply.raw.write(`data: ${JSON.stringify({ type: 'draft_discard', chunk_id: chunkId })}\n\n`);
+                    chunkId++;
+                    textEmittedForCurrentMsg = false;
+                    hasEmittedTextTokens = false;
+                    prevPartial = nextPartial;
+                    discardedMsgIds.add(partialMsgId);
+                    completedTexts.length = 0;
+                  }
+                }
 
                 if (nextPartial.length > prevPartial.length && uiChunks.length === 0) {
                   const isEchoOfPrior = completedTexts.some(
@@ -548,11 +578,17 @@ async function proxyRoutes(fastify: FastifyInstance) {
                     reply.raw.write(`data: ${JSON.stringify({ type: 'token', content: delta, chunk_id: chunkId })}\n\n`);
                     chunkId++;
                     hasEmittedTextTokens = true;
+                    textEmittedForCurrentMsg = true;
                   }
                 }
 
                 if (sseType === 'messages/complete' && uiChunks.length === 0 && nextPartial.length > 0) {
-                  completedTexts.push(nextPartial);
+                  const completeMsgId = Array.isArray(parsed) && parsed.length > 0
+                    ? ((parsed[0] as Record<string, any>)?.id ?? '')
+                    : '';
+                  if (!discardedMsgIds.has(completeMsgId)) {
+                    completedTexts.push(nextPartial);
+                  }
                 }
 
                 prevPartial = nextPartial;
