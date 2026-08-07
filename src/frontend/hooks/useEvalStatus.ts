@@ -6,6 +6,7 @@ export type EvalStatusValue =
   | 'in_progress'
   | 'completed'
   | 'failed'
+  | 'error'
   | 'unknown';
 
 export interface EvalState {
@@ -33,7 +34,12 @@ const INITIAL: EvalState = {
   createdAt: null,
 };
 
-export function useEvalStatus(): EvalState {
+export interface UseEvalStatusResult {
+  state: EvalState;
+  refresh: () => void;
+}
+
+export function useEvalStatus(): UseEvalStatusResult {
   const [state, setState] = useState<EvalState>(INITIAL);
   const statusRef = useRef<EvalStatusValue>('unknown');
   const mounted = useRef(true);
@@ -84,5 +90,5 @@ export function useEvalStatus(): EvalState {
     };
   }, [fetchStatus, state.status]);
 
-  return state;
+  return { state, refresh: () => { void fetchStatus(); } };
 }

@@ -5,6 +5,7 @@ interface EvalStatusBarProps {
   score: number | null;
   pass: number;
   fail: number;
+  error?: number;
   createdAt?: string | null;
 }
 
@@ -14,7 +15,7 @@ function formatElapsed(ms: number): string {
   return `${Math.floor(secs / 60)}m ${secs % 60}s`;
 }
 
-export function EvalStatusBar({ status, score, pass, fail, createdAt }: EvalStatusBarProps) {
+export function EvalStatusBar({ status, score, pass, fail, error = 0, createdAt }: EvalStatusBarProps) {
   const [elapsed, setElapsed] = useState('');
 
   const isRunning = status === 'in_progress' || status === 'not_started';
@@ -48,7 +49,7 @@ export function EvalStatusBar({ status, score, pass, fail, createdAt }: EvalStat
     );
   }
 
-  if (status === 'completed' || status === 'passed') {
+  if (status === 'completed') {
     const pct = score != null ? Math.round(score * 100) : null;
     const isGood = pct == null || pct >= 70;
 
@@ -70,6 +71,7 @@ export function EvalStatusBar({ status, score, pass, fail, createdAt }: EvalStat
         </span>
         <span className="text-xs text-muted-foreground">
           {pass} passed · {fail} failed
+          {error > 0 && <span className="text-amber-600 dark:text-amber-400"> · {error} error{error !== 1 ? 's' : ''}</span>}
         </span>
       </div>
     );
@@ -80,9 +82,10 @@ export function EvalStatusBar({ status, score, pass, fail, createdAt }: EvalStat
       <div className="flex items-center gap-2 rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
         <span className="text-red-600 dark:text-red-400">✗</span>
         <span className="text-sm font-medium text-red-700 dark:text-red-300">Eval failed</span>
-        {(pass > 0 || fail > 0) && (
+        {(pass > 0 || fail > 0 || error > 0) && (
           <span className="text-xs text-muted-foreground">
             {pass} passed · {fail} failed
+            {error > 0 && <span className="text-amber-600 dark:text-amber-400"> · {error} error{error !== 1 ? 's' : ''}</span>}
           </span>
         )}
       </div>

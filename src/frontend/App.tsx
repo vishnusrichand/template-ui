@@ -8,6 +8,7 @@ import { ChatRoutePage } from './pages/ChatPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastNotifications } from './components/ToastNotifications';
+import { EvalDatasetPage } from './pages/EvalDatasetPage';
 import { useThemeSync } from './hooks/useThemeSync';
 import { loadConfig } from './redux/slices/config';
 import { setConfigDefaults } from './redux/slices/userSettings';
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="/chat" element={<Navigate to="/" replace />} />
           <Route path="/chat/:threadId" element={<ChatRoutePage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/eval/dataset" element={<EvalDatasetPage />} />
         </Routes>
       </AppLayout>
       <ToastNotifications />

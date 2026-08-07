@@ -35,10 +35,11 @@ export function EvalDashboard() {
       />
 
       <EvalStatusBar
-        status={isRunning ? 'in_progress' : evalState.status}
+        status={isRunning || triggerState.status === 'loading' ? 'in_progress' : evalState.status}
         score={evalState.score}
         pass={evalState.pass}
         fail={evalState.fail}
+        error={evalState.error}
         createdAt={evalState.createdAt}
       />
 

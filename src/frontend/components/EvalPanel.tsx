@@ -12,7 +12,7 @@ import { buildAppPath } from '../lib/app-paths';
 import { useEvalStatus } from '../hooks/useEvalStatus';
 
 export function EvalPanel() {
-  const eval_ = useEvalStatus();
+  const { state: eval_ } = useEvalStatus();
   const [triggering, setTriggering] = useState(false);
   const [resultsOpen, setResultsOpen] = useState(false);
 

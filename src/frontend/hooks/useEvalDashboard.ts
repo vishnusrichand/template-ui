@@ -14,29 +14,27 @@ export interface EvalDashboardState {
   evalState: EvalState;
   isRunning: boolean;
   result: EvalRow | null;
-  prevScore: number | null;
   history: EvalHistoryResponse | null;
   trends: EvalTrendsResponse | null;
   triggerState: ActionState;
   trigger: (force: boolean) => Promise<void>;
-  detailOpen: boolean;
-  setDetailOpen: (open: boolean) => void;
 }
 
 export function useEvalDashboard(): EvalDashboardState {
-  const evalState = useEvalStatus();
+  const { state: evalState, refresh: refreshStatus } = useEvalStatus();
   const { data: history, refetch: refetchHistory } = useEvalHistory();
   const { data: trends, refetch: refetchTrends } = useEvalTrends();
 
   const [result, setResult] = useState<EvalRow | null>(null);
-  const [prevScore, setPrevScore] = useState<number | null>(null);
   const [triggerState, setTriggerState] = useState<ActionState>({
     status: 'idle',
     message: '',
   });
-  const [detailOpen, setDetailOpen] = useState(false);
 
   const prevStatusRef = useRef(evalState.status);
+  // Keep refreshStatus stable in a ref so trigger callback can use it without re-creating
+  const refreshStatusRef = useRef(refreshStatus);
+  refreshStatusRef.current = refreshStatus;
   const resultRef = useRef(result);
   resultRef.current = result;
 
@@ -50,7 +48,6 @@ export function useEvalDashboard(): EvalDashboardState {
       );
       if (!res.ok) return;
       const data = (await res.json()) as EvalRow;
-      setPrevScore(resultRef.current?.eval_score ?? null);
       setResult(data);
     } catch {
       // ignore
@@ -63,7 +60,7 @@ export function useEvalDashboard(): EvalDashboardState {
       prevStatusRef.current === 'not_started';
     const isNowComplete = evalState.status === 'completed';
     const isNowDone =
-      evalState.status === 'completed' || evalState.status === 'failed';
+      evalState.status === 'completed' || evalState.status === 'failed' || evalState.status === 'error';
 
     if (wasRunning && isNowComplete) {
       void fetchResults();
@@ -135,6 +132,9 @@ export function useEvalDashboard(): EvalDashboardState {
           status: 'success',
           message: 'Eval queued — running in background.',
         });
+        // Immediately refresh status so UI switches to in_progress without
+        // waiting for the next scheduled poll (which may be up to 60s away).
+        refreshStatusRef.current();
       } catch (e) {
         setTriggerState({ status: 'error', message: String(e) });
       }
@@ -146,12 +146,9 @@ export function useEvalDashboard(): EvalDashboardState {
     evalState,
     isRunning,
     result,
-    prevScore,
     history,
     trends,
     triggerState,
     trigger,
-    detailOpen,
-    setDetailOpen,
   };
 }

@@ -1,3 +1,4 @@
+import { Database } from 'lucide-react';
 import type { ActionState, EvalStatus } from './eval-types';
 
 interface EvalControlsProps {
@@ -27,10 +28,17 @@ export function EvalControls({
         <button
           onClick={() => onTrigger(forceMode)}
           disabled={triggerState.status === 'loading' || isRunning}
-          className="px-5 py-2 rounded-md bg-primary text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
-          style={{ color: '#ffffff' }}
+          className="px-5 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           {triggerState.status === 'loading' ? 'Running…' : 'Evaluate'}
+        </button>
+
+        <button
+          onClick={() => window.open('/eval/dataset', '_blank', 'noopener')}
+          className="flex items-center gap-2 px-4 py-2 rounded-md border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-colors"
+        >
+          <Database className="w-4 h-4" />
+          Dataset
         </button>
 
         <label className="flex items-center gap-2 cursor-pointer text-sm text-foreground/70 hover:text-foreground transition-colors select-none">
