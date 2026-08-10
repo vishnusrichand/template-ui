@@ -57,10 +57,14 @@ export function useEvalDashboard(): EvalDashboardState {
   useEffect(() => {
     const wasRunning =
       prevStatusRef.current === 'in_progress' ||
-      prevStatusRef.current === 'not_started';
+      prevStatusRef.current === 'not_started' ||
+      prevStatusRef.current === 'unknown';
     const isNowComplete = evalState.status === 'completed';
     const isNowDone =
-      evalState.status === 'completed' || evalState.status === 'failed' || evalState.status === 'error';
+      evalState.status === 'completed' ||
+      evalState.status === 'failed' ||
+      evalState.status === 'error' ||
+      evalState.status === 'no_dataset';
 
     if (wasRunning && isNowComplete) {
       void fetchResults();
@@ -68,14 +72,9 @@ export function useEvalDashboard(): EvalDashboardState {
       void refetchTrends();
     }
 
-    if (
-      prevStatusRef.current === 'unknown' &&
-      isNowDone
-    ) {
-      void fetchResults();
-    }
-
-    // Clear the "queued / running" trigger message once the eval finishes.
+    // Clear the "queued / running" trigger message once the eval reaches any
+    // terminal or definitive state — including the fast-fail path where status
+    // jumps from the initial 'unknown' directly to 'error' before the first poll.
     if (wasRunning && isNowDone) {
       setTriggerState({ status: 'idle', message: '' });
     }

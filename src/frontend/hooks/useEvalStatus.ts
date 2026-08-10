@@ -7,10 +7,12 @@ export type EvalStatusValue =
   | 'completed'
   | 'failed'
   | 'error'
+  | 'no_dataset'
   | 'unknown';
 
 export interface EvalState {
   status: EvalStatusValue;
+  message: string;
   score: number | null;
   pass: number;
   fail: number;
@@ -25,6 +27,7 @@ const POLL_IDLE_MS = 60_000;
 
 const INITIAL: EvalState = {
   status: 'unknown',
+  message: '',
   score: null,
   pass: 0,
   fail: 0,
@@ -57,6 +60,7 @@ export function useEvalStatus(): UseEvalStatusResult {
         statusRef.current = newStatus;
         setState({
           status: newStatus,
+          message: typeof data.message === 'string' ? data.message : '',
           score: typeof data.eval_score === 'number' ? data.eval_score : null,
           pass: typeof data.pass === 'number' ? data.pass : 0,
           fail: typeof data.fail === 'number' ? data.fail : 0,

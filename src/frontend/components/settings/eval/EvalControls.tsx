@@ -1,4 +1,5 @@
 import { Database } from 'lucide-react';
+import { buildAppPath } from '../../../lib/app-paths';
 import type { ActionState, EvalStatus } from './eval-types';
 
 interface EvalControlsProps {
@@ -34,7 +35,7 @@ export function EvalControls({
         </button>
 
         <button
-          onClick={() => window.open('/eval/dataset', '_blank', 'noopener')}
+          onClick={() => window.open(buildAppPath('/eval/dataset'), '_blank', 'noopener')}
           className="flex items-center gap-2 px-4 py-2 rounded-md border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-colors"
         >
           <Database className="w-4 h-4" />
