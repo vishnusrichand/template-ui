@@ -23,7 +23,6 @@ export interface EvalState {
 }
 
 const POLL_ACTIVE_MS = 5_000;
-const POLL_IDLE_MS = 60_000;
 
 const INITIAL: EvalState = {
   status: 'unknown',
