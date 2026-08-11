@@ -121,17 +121,24 @@ export function EvalDatasetPage() {
   }
 
   async function handleDelete(id: string) {
+    const previous = cases;
     const updated = cases.filter((c) => c.id !== id);
     setCases(updated);
     try {
-      await fetch(buildAgentApiUrl('/evals/dataset'), {
+      const res = await fetch(buildAgentApiUrl('/evals/dataset'), {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cases: updated, judge_model: judgeModel || null }),
       });
+      if (!res.ok) {
+        setCases(previous);
+        const err = await res.json().catch(() => ({}));
+        setSaveError((err as { detail?: string }).detail ?? `Delete failed (${res.status})`);
+      }
     } catch {
-      // local state already updated; backend will sync on next explicit save
+      setCases(previous);
+      setSaveError('Network error — could not delete test case.');
     }
   }
 
