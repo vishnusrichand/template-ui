@@ -22,7 +22,7 @@ export interface EvalState {
   createdAt: string | null;
 }
 
-const POLL_ACTIVE_MS = 5_000;
+const POLL_ACTIVE_MS = 10_000;
 
 const INITIAL: EvalState = {
   status: 'unknown',
