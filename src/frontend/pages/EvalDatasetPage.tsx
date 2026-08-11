@@ -120,8 +120,19 @@ export function EvalDatasetPage() {
     setModalOpen(true);
   }
 
-  function handleDelete(id: string) {
-    setCases((prev) => prev.filter((c) => c.id !== id));
+  async function handleDelete(id: string) {
+    const updated = cases.filter((c) => c.id !== id);
+    setCases(updated);
+    try {
+      await fetch(buildAgentApiUrl('/evals/dataset'), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cases: updated, judge_model: judgeModel || null }),
+      });
+    } catch {
+      // local state already updated; backend will sync on next explicit save
+    }
   }
 
 
