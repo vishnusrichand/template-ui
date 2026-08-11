@@ -100,7 +100,7 @@ export function useEvalDashboard(): EvalDashboardState {
         if (!res.ok) {
           setTriggerState({
             status: 'error',
-            message: (data.detail as string) || res.statusText,
+            message: (data.message as string) || (data.detail as string) || res.statusText,
           });
           return;
         }
