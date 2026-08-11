@@ -17,6 +17,7 @@ export interface EvalDashboardState {
   history: EvalHistoryResponse | null;
   trends: EvalTrendsResponse | null;
   triggerState: ActionState;
+  triggeredAt: number | null;
   trigger: (force: boolean) => Promise<void>;
 }
 
@@ -30,6 +31,7 @@ export function useEvalDashboard(): EvalDashboardState {
     status: 'idle',
     message: '',
   });
+  const [triggeredAt, setTriggeredAt] = useState<number | null>(null);
 
   const prevStatusRef = useRef(evalState.status);
   // Keep refreshStatus stable in a ref so trigger callback can use it without re-creating
@@ -77,6 +79,7 @@ export function useEvalDashboard(): EvalDashboardState {
     // jumps from the initial 'unknown' directly to 'error' before the first poll.
     if (wasRunning && isNowDone) {
       setTriggerState({ status: 'idle', message: '' });
+      setTriggeredAt(null);
     }
 
     prevStatusRef.current = evalState.status;
@@ -89,6 +92,7 @@ export function useEvalDashboard(): EvalDashboardState {
         : '/api/proxy/agent/evals/trigger';
 
       setTriggerState({ status: 'loading', message: '' });
+      setTriggeredAt(Date.now());
       try {
         const res = await fetch(buildAppPath(path), {
           method: 'POST',
@@ -148,6 +152,7 @@ export function useEvalDashboard(): EvalDashboardState {
     history,
     trends,
     triggerState,
+    triggeredAt,
     trigger,
   };
 }

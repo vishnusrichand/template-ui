@@ -6,7 +6,7 @@ interface EvalStatusBarProps {
   pass: number;
   fail: number;
   error?: number;
-  createdAt?: string | null;
+  triggeredAt?: number | null;
 }
 
 function formatElapsed(ms: number): string {
@@ -15,27 +15,20 @@ function formatElapsed(ms: number): string {
   return `${Math.floor(secs / 60)}m ${secs % 60}s`;
 }
 
-export function EvalStatusBar({ status, score, pass, fail, error = 0, createdAt }: EvalStatusBarProps) {
+export function EvalStatusBar({ status, score, pass, fail, error = 0, triggeredAt }: EvalStatusBarProps) {
   const [elapsed, setElapsed] = useState('');
-
   const isRunning = status === 'in_progress' || status === 'not_started';
 
   useEffect(() => {
-    if (!isRunning) {
+    if (!isRunning || !triggeredAt) {
       setElapsed('');
       return;
     }
-
-    // Anchor to server-provided created_at so the timer survives tab switches
-    // and component remounts. Fall back to now() only if the server hasn't
-    // sent a timestamp yet (first render before first poll completes).
-    const startMs = createdAt ? new Date(createdAt).getTime() : Date.now();
-
-    const tick = () => setElapsed(formatElapsed(Date.now() - startMs));
+    const tick = () => setElapsed(formatElapsed(Date.now() - triggeredAt));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [isRunning, createdAt]);
+  }, [isRunning, triggeredAt]);
 
   if (!status || status === 'unknown') return null;
 

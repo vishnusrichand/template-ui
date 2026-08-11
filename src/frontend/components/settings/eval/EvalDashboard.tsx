@@ -15,6 +15,7 @@ export function EvalDashboard() {
     history,
     trends,
     triggerState,
+    triggeredAt,
     trigger,
   } = useEvalDashboard();
 
@@ -40,7 +41,7 @@ export function EvalDashboard() {
         pass={evalState.pass}
         fail={evalState.fail}
         error={evalState.error}
-        createdAt={evalState.createdAt}
+        triggeredAt={triggeredAt}
       />
 
       {trends && <MetricTrendsSection data={trends} />}
@@ -50,12 +51,6 @@ export function EvalDashboard() {
           runs={history.runs}
           onViewReport={setReportData}
         />
-      )}
-
-      {evalState.status === 'no_dataset' && (
-        <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-          {evalState.message || 'No eval dataset configured. Add test cases via the Dataset UI before running evaluation.'}
-        </div>
       )}
 
       {!hasResult && !isRunning && !hasHistory &&
