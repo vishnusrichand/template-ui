@@ -79,15 +79,11 @@ export function useEvalStatus(): UseEvalStatusResult {
     mounted.current = true;
     void fetchStatus();
 
-    const active =
-      statusRef.current === 'in_progress' || statusRef.current === 'not_started';
-    const id = window.setInterval(
-      () => {
-        void fetchStatus();
-      },
-      active ? POLL_ACTIVE_MS : POLL_IDLE_MS,
-    );
+    if (statusRef.current !== 'in_progress') {
+      return () => { mounted.current = false; };
+    }
 
+    const id = window.setInterval(() => { void fetchStatus(); }, POLL_ACTIVE_MS);
     return () => {
       mounted.current = false;
       window.clearInterval(id);
