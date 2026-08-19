@@ -18,6 +18,7 @@ export interface EvalDashboardState {
   trends: EvalTrendsResponse | null;
   triggerState: ActionState;
   triggeredAt: number | null;
+  hasTriggered: boolean;
   trigger: (force: boolean) => Promise<void>;
 }
 
@@ -32,6 +33,9 @@ export function useEvalDashboard(): EvalDashboardState {
     message: '',
   });
   const [triggeredAt, setTriggeredAt] = useState<number | null>(null);
+  const [hasTriggered, setHasTriggered] = useState(
+    () => sessionStorage.getItem('evalHasTriggered') === '1'
+  );
 
   const prevStatusRef = useRef(evalState.status);
   // Keep refreshStatus stable in a ref so trigger callback can use it without re-creating
@@ -39,6 +43,8 @@ export function useEvalDashboard(): EvalDashboardState {
   refreshStatusRef.current = refreshStatus;
   const resultRef = useRef(result);
   resultRef.current = result;
+  const evalStatusRef = useRef(evalState.status);
+  evalStatusRef.current = evalState.status;
 
   const isRunning = evalState.status === 'in_progress';
 
@@ -60,7 +66,8 @@ export function useEvalDashboard(): EvalDashboardState {
     const wasRunning =
       prevStatusRef.current === 'in_progress' ||
       prevStatusRef.current === 'not_started' ||
-      prevStatusRef.current === 'unknown';
+      prevStatusRef.current === 'unknown' ||
+      prevStatusRef.current === 'error';
     const isNowComplete = evalState.status === 'completed';
     const isNowDone =
       evalState.status === 'completed' ||
@@ -93,6 +100,8 @@ export function useEvalDashboard(): EvalDashboardState {
 
       setTriggerState({ status: 'loading', message: '' });
       setTriggeredAt(Date.now());
+      setHasTriggered(true);
+      sessionStorage.setItem('evalHasTriggered', '1');
       try {
         const res = await fetch(buildAppPath(path), {
           method: 'POST',
@@ -138,6 +147,17 @@ export function useEvalDashboard(): EvalDashboardState {
         // Immediately refresh status so UI switches to in_progress without
         // waiting for the next scheduled poll (which may be up to 60s away).
         refreshStatusRef.current();
+        // If the eval runner fails instantly (e.g. EVAL_RUNNER_URL not set),
+        // the status never changes from 'error' → 'error', so the effect won't
+        // fire. Poll once after a short delay and clear the queued message if
+        // the eval has already reached a terminal state.
+        setTimeout(() => {
+          const terminal = ['completed', 'failed', 'error', 'no_dataset'];
+          if (terminal.includes(evalStatusRef.current)) {
+            setTriggerState({ status: 'idle', message: '' });
+            setTriggeredAt(null);
+          }
+        }, 2000);
       } catch (e) {
         setTriggerState({ status: 'error', message: String(e) });
       }
@@ -153,6 +173,7 @@ export function useEvalDashboard(): EvalDashboardState {
     trends,
     triggerState,
     triggeredAt,
+    hasTriggered,
     trigger,
   };
 }

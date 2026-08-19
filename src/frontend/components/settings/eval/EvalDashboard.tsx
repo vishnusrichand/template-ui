@@ -16,6 +16,7 @@ export function EvalDashboard() {
     trends,
     triggerState,
     triggeredAt,
+    hasTriggered,
     trigger,
   } = useEvalDashboard();
 
@@ -35,14 +36,16 @@ export function EvalDashboard() {
         onForceModeChange={setForceMode}
       />
 
-      <EvalStatusBar
-        status={isRunning || triggerState.status === 'loading' ? 'in_progress' : evalState.status}
-        score={evalState.score}
-        pass={evalState.pass}
-        fail={evalState.fail}
-        error={evalState.error}
-        triggeredAt={triggeredAt}
-      />
+      {hasTriggered && (
+        <EvalStatusBar
+          status={isRunning || triggerState.status === 'loading' ? 'in_progress' : evalState.status}
+          score={evalState.score}
+          pass={evalState.pass}
+          fail={evalState.fail}
+          error={evalState.error}
+          triggeredAt={triggeredAt}
+        />
+      )}
 
       {trends && <MetricTrendsSection data={trends} />}
 

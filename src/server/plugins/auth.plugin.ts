@@ -119,6 +119,7 @@ async function routes(fastify: FastifyInstance) {
 
       (request as any).session.user = userInfo;
       (request as any).session.token = tokenSet.token;
+      await (request as any).session.save();
 
       return reply.redirect(defaultRedirect);
     } catch (error) {
