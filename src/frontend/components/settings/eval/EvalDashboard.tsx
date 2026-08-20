@@ -18,6 +18,8 @@ export function EvalDashboard() {
     triggeredAt,
     hasTriggered,
     trigger,
+    authRequired,
+    clearAuthRequired,
   } = useEvalDashboard();
 
   const [forceMode, setForceMode] = useState(false);
@@ -35,6 +37,36 @@ export function EvalDashboard() {
         forceMode={forceMode}
         onForceModeChange={setForceMode}
       />
+
+      {authRequired.length > 0 && (
+        <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 space-y-2">
+          <p className="text-sm font-medium text-yellow-800">
+            Connect required services before running eval:
+          </p>
+          <div className="flex flex-col gap-2">
+            {authRequired.map((server) => (
+              <button
+                key={server.name}
+                className="w-fit rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                onClick={() => {
+                  fetch(`/api/proxy/agent${server.connect_url}`, { method: 'POST', credentials: 'same-origin' })
+                    .then((r) => r.json())
+                    .then((b: { authorize_url?: string }) => {
+                      if (b.authorize_url) window.open(b.authorize_url, `mcp-connect-${server.name}`, 'width=600,height=700');
+                    })
+                    .catch(() => undefined);
+                }}
+              >
+                Connect {server.name.charAt(0).toUpperCase() + server.name.slice(1)}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-yellow-700">
+            After connecting, click Evaluate again.{' '}
+            <button className="underline" onClick={clearAuthRequired}>Dismiss</button>
+          </p>
+        </div>
+      )}
 
       {hasTriggered && (
         <EvalStatusBar

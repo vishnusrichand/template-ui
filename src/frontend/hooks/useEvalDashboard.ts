@@ -10,6 +10,11 @@ import type {
   EvalTrendsResponse,
 } from '../components/settings/eval/eval-types';
 
+export interface McpAuthRequired {
+  name: string;
+  connect_url: string;
+}
+
 export interface EvalDashboardState {
   evalState: EvalState;
   isRunning: boolean;
@@ -20,6 +25,8 @@ export interface EvalDashboardState {
   triggeredAt: number | null;
   hasTriggered: boolean;
   trigger: (force: boolean) => Promise<void>;
+  authRequired: McpAuthRequired[];
+  clearAuthRequired: () => void;
 }
 
 export function useEvalDashboard(): EvalDashboardState {
@@ -32,6 +39,7 @@ export function useEvalDashboard(): EvalDashboardState {
     status: 'idle',
     message: '',
   });
+  const [authRequired, setAuthRequired] = useState<McpAuthRequired[]>([]);
   const [triggeredAt, setTriggeredAt] = useState<number | null>(null);
   const [hasTriggered, setHasTriggered] = useState(
     () => sessionStorage.getItem('evalHasTriggered') === '1'
@@ -92,6 +100,21 @@ export function useEvalDashboard(): EvalDashboardState {
     prevStatusRef.current = evalState.status;
   }, [evalState.status, fetchResults, refetchHistory, refetchTrends]);
 
+  // Listen for OAuth popup completion — remove the connected server from the
+  // auth-required list so the user can click Evaluate without re-authenticating.
+  useEffect(() => {
+    if (authRequired.length === 0) return undefined;
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const msg = event.data as { type?: string; mcp_name?: string } | null;
+      if (msg?.type === 'mcp_oauth_done' && msg.mcp_name) {
+        setAuthRequired((prev) => prev.filter((s) => s.name !== msg.mcp_name));
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [authRequired.length]);
+
   const trigger = useCallback(
     async (force: boolean) => {
       const path = force
@@ -110,6 +133,16 @@ export function useEvalDashboard(): EvalDashboardState {
           body: '{}',
         });
         const data = (await res.json()) as Record<string, unknown>;
+        if (res.status === 403) {
+          const authReq = (data.auth_required ?? (data.detail as Record<string, unknown>)?.auth_required) as Array<{ name: string; connect_url: string }> | undefined;
+          if (authReq?.length) {
+            setAuthRequired(authReq);
+            setTriggerState({ status: 'idle', message: '' });
+            return;
+          }
+        }
+        // Non-403 response — clear any stale auth prompt
+        setAuthRequired([]);
         if (!res.ok) {
           setTriggerState({
             status: 'error',
@@ -175,5 +208,7 @@ export function useEvalDashboard(): EvalDashboardState {
     triggeredAt,
     hasTriggered,
     trigger,
+    authRequired,
+    clearAuthRequired: () => setAuthRequired([]),
   };
 }
