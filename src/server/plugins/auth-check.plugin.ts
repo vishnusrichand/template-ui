@@ -1,6 +1,7 @@
 import fastifyPlugin from "fastify-plugin";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { getSettings } from "../utils/settings.js";
+import { decodeJwtPayload, resolveRole } from "../utils/jwt.js";
 
 declare module "fastify" {
   interface Session {
@@ -21,6 +22,8 @@ declare module "fastify" {
       scope: string;
     };
     redirectUri?: string;
+    /** ROVER role resolved from JWT realm_access.roles. Only set when AUTH_ENABLED=true. */
+    role?: "developer" | "viewer" | "denied";
   }
 }
 function headerValue(request: FastifyRequest, name: string): string | undefined {
@@ -112,11 +115,30 @@ async function authCheck(
           scope: "openid",
         };
       }
+      // Dev bypass: grant full developer access regardless of groups
+      request.session.role = "developer";
     }
 
     if (!request.session?.user) {
       request.session.redirectUri = request.url;
       return reply.redirect(buildGatewayLoginUrl(request));
+    }
+
+    // ROVER group-based access control (only when AUTH_ENABLED=true)
+    if (process.env.AUTH_ENABLED !== "false") {
+      const role = request.session.role;
+
+      if (role === "denied") {
+        reply.status(403).send({ error: "access_denied", message: "You do not have access to this application." });
+        return;
+      }
+
+      // Viewers cannot access eval or dataset routes
+      const path = request.url.split("?")[0];
+      if (role === "viewer" && (path.startsWith("/eval") || path.includes("/evals"))) {
+        reply.status(403).send({ error: "forbidden", message: "Eval access requires developer role." });
+        return;
+      }
     }
 
     next();

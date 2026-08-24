@@ -37,13 +37,16 @@ export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const tabRefs = useRef<Map<TabId, HTMLButtonElement>>(new Map());
   const developerMode = useAppSelector(selectDeveloperMode);
-  const visibleTabs = TABS.filter((t) => t.id !== 'developer' || developerMode);
+  // Developer tab requires BOTH developer role from server AND developerMode toggle enabled
+  const isDeveloper = (window.APP_DATA as { userRole?: string })?.userRole === 'developer';
+  const canSeeDeveloperTab = isDeveloper && developerMode;
+  const visibleTabs = TABS.filter((t) => t.id !== 'developer' || canSeeDeveloperTab);
 
   useEffect(() => {
-    if (activeTab === 'developer' && !developerMode) {
+    if (activeTab === 'developer' && !canSeeDeveloperTab) {
       setActiveTab('profile');
     }
-  }, [developerMode, activeTab]);
+  }, [canSeeDeveloperTab, activeTab]);
 
   const handleTabKeyDown = (e: React.KeyboardEvent, tabId: TabId) => {
     const tabIds = visibleTabs.map((t) => t.id);

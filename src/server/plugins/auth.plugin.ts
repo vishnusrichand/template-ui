@@ -2,6 +2,7 @@ import oauthPlugin from "@fastify/oauth2";
 import { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { getSettings } from "../utils/settings.js";
+import { decodeJwtPayload, resolveRole } from "../utils/jwt.js";
 
 import { OAuth2Namespace } from "@fastify/oauth2";
 
@@ -136,6 +137,10 @@ async function routes(fastify: FastifyInstance) {
 
       (request as any).session.user = userInfo;
       (request as any).session.token = tokenSet.token;
+
+      // Resolve ROVER group role from JWT and store in session
+      const payload = decodeJwtPayload(tokenSet.token.access_token);
+      (request as any).session.role = resolveRole(payload);
 
       return reply.redirect(defaultRedirect);
     } catch (error) {

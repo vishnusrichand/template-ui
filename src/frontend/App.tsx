@@ -104,7 +104,14 @@ export default function App() {
           <Route path="/chat" element={<Navigate to="/" replace />} />
           <Route path="/chat/:threadId" element={<ChatRoutePage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/eval/dataset" element={<EvalDatasetPage />} />
+          <Route
+            path="/eval/dataset"
+            element={
+              (window.APP_DATA as { userRole?: string })?.userRole === 'developer'
+                ? <EvalDatasetPage />
+                : <Navigate to="/" replace />
+            }
+          />
         </Routes>
       </AppLayout>
       <ToastNotifications />

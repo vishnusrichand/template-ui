@@ -157,6 +157,7 @@ async function routes(fastify: FastifyInstance) {
       agentName,
       branding: cfg.branding,
       features: cfg.features,
+      userRole: (session as { role?: string }).role ?? "developer",
     };
 
     reply.type("text/html");
