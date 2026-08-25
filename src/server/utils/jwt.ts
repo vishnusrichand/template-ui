@@ -14,20 +14,23 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
 /**
  * Resolve the user's ROVER role from a decoded JWT payload.
  *
- * Reads ACCESS_ORG_NAME env var and looks for {org}_developer / {org}_viewer
- * in realm_access.roles. When ACCESS_ORG_NAME is unset → 'developer' (open).
+ * Reads RESTRICT_TO_GROUPS, DEVELOPER_GROUP, USER_GROUP env vars.
+ * When RESTRICT_TO_GROUPS is false or no groups configured → 'developer' (open).
  * Only called when AUTH_ENABLED=true.
  */
 export function resolveRole(
   payload: Record<string, unknown>,
 ): "developer" | "viewer" | "denied" {
-  const org = process.env.DEPLOYED_AGENT_ORG?.trim();
-  if (!org) return "developer"; // no org configured — open access
+  const restrict = process.env.RESTRICT_TO_GROUPS === "true";
+  const devGroup = process.env.DEVELOPER_GROUP?.trim();
+  const userGroup = process.env.USER_GROUP?.trim();
+
+  if (!restrict || (!devGroup && !userGroup)) return "developer"; // not restricted or no groups
 
   const realmAccess = payload["realm_access"] as Record<string, unknown> | undefined;
-  const roles = (realmAccess?.["roles"] as string[] | undefined) ?? [];
+  const roles = ((realmAccess?.["roles"] as string[] | undefined) ?? []).map(r => r.toLowerCase());
 
-  if (roles.includes(`${org}_developer`)) return "developer";
-  if (roles.includes(`${org}_viewer`)) return "viewer";
+  if (devGroup && roles.includes(devGroup.toLowerCase())) return "developer";
+  if (userGroup && roles.includes(userGroup.toLowerCase())) return "viewer";
   return "denied";
 }
