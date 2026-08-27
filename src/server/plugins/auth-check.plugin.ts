@@ -1,7 +1,6 @@
 import fastifyPlugin from "fastify-plugin";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { getSettings } from "../utils/settings.js";
-import { decodeJwtPayload, resolveRole } from "../utils/jwt.js";
 
 declare module "fastify" {
   interface Session {

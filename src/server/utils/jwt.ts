@@ -14,18 +14,20 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
 /**
  * Resolve the user's ROVER role from a decoded JWT payload.
  *
- * Reads RESTRICT_TO_GROUPS, DEVELOPER_GROUP, USER_GROUP env vars.
- * When RESTRICT_TO_GROUPS is false or no groups configured → 'developer' (open).
+ * Reads DEVELOPER_GROUP and USER_GROUP env vars.
+ * Both empty → 'developer' (open).
+ * Only DEVELOPER_GROUP set → members are developer; others denied.
+ * Only USER_GROUP set → members are viewer (no eval / developer page); others denied.
+ * Both set: DEVELOPER_GROUP → developer, USER_GROUP → viewer, neither → denied.
  * Only called when AUTH_ENABLED=true.
  */
 export function resolveRole(
   payload: Record<string, unknown>,
 ): "developer" | "viewer" | "denied" {
-  const restrict = process.env.RESTRICT_TO_GROUPS === "true";
   const devGroup = process.env.DEVELOPER_GROUP?.trim();
   const userGroup = process.env.USER_GROUP?.trim();
 
-  if (!restrict || (!devGroup && !userGroup)) return "developer"; // not restricted or no groups
+  if (!devGroup && !userGroup) return "developer";
 
   const realmAccess = payload["realm_access"] as Record<string, unknown> | undefined;
   const roles = ((realmAccess?.["roles"] as string[] | undefined) ?? []).map(r => r.toLowerCase());
