@@ -19,7 +19,7 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
  * Only DEVELOPER_GROUP set → members are developer; others denied.
  * Only USER_GROUP set → members are viewer (no eval / developer page); others denied.
  * Both set: DEVELOPER_GROUP → developer, USER_GROUP → viewer, neither → denied.
- * Only called when AUTH_ENABLED=true.
+ * Called from OIDC login and from the gateway-token path (AUTH_ENABLED=false).
  */
 export function resolveRole(
   payload: Record<string, unknown>,
