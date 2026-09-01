@@ -8,6 +8,7 @@ import { EvalStatusBar } from './EvalStatusBar';
 import { MetricTrendsSection } from './MetricTrendsSection';
 import { EvalRunsTable } from './EvalRunsTable';
 import { FullReportModal } from './FullReportModal';
+import { isLiveEvalRun } from './eval-utils';
 
 function isSafeConnectUrl(url: string): boolean {
   return /^\/[a-zA-Z0-9/_-]+$/.test(url) && !url.includes('..');
@@ -31,6 +32,7 @@ export function EvalDashboard() {
     triggerState,
     triggeredAt,
     isCached,
+    hasTriggered,
     trigger,
     authRequired,
     clearAuthRequired,
@@ -114,7 +116,12 @@ export function EvalDashboard() {
       )}
 
       <EvalStatusBar
-        status={isRunning ? 'in_progress' : evalState.status}
+        status={
+          isLiveEvalRun({ evalStatus: evalState.status, triggerStatus: triggerState.status })
+          || (hasTriggered && evalState.status === 'unknown')
+            ? 'in_progress'
+            : evalState.status
+        }
         score={evalState.score}
         pass={evalState.pass}
         fail={evalState.fail}

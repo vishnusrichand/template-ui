@@ -40,7 +40,6 @@ export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const tabRefs = useRef<Map<TabId, HTMLButtonElement>>(new Map());
   const developerMode = useAppSelector(selectDeveloperMode);
-  // Developer tab requires BOTH developer role from server AND developerMode toggle enabled
   const isDeveloper = (window.APP_DATA as { userRole?: string })?.userRole === 'developer';
   const canSeeDeveloperTab = isDeveloper && developerMode;
   const visibleTabs = TABS.filter((t) => t.id !== 'developer' || canSeeDeveloperTab);

@@ -89,6 +89,10 @@ const userSettingsSlice = createSlice({
       state.alwaysAllowedTools = [];
       persistSettings(state);
     },
+    setDeveloperMode(state, action: PayloadAction<boolean>) {
+      state.developerMode = action.payload;
+      persistSettings(state);
+    },
     setAutoApproveAllTools(state, action: PayloadAction<boolean>) {
       state.autoApproveAllTools = action.payload;
       persistSettings(state);
@@ -121,5 +125,7 @@ export const selectAlwaysAllowedTools = (state: { userSettings: UserSettingsStat
   state.userSettings.alwaysAllowedTools;
 export const selectAutoApproveAllTools = (state: { userSettings: UserSettingsState }) =>
   state.userSettings.autoApproveAllTools;
+export const selectDeveloperMode = (state: { userSettings: UserSettingsState }) =>
+  state.userSettings.developerMode;
 
 export default userSettingsSlice.reducer;
